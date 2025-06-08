@@ -5,33 +5,25 @@ import * as fs from 'fs';
 export function activate(context: vscode.ExtensionContext) {
   console.log("BlobBuddy extension activated");
 
-  // Prompt for user name so their Wisp can address them
-  // Only prompt once and store the name in global state
+  // Prompt for user name once (should we build a more complex flow?)
   const storedName = context.globalState.get<string>('userName');
   if (!storedName) {
-    vscode.window.showInputBox({
-      prompt: "What should I call you?",
-      value: 'Friend'
-    }).then(name => {
-      if (name) {
-        context.globalState.update('userName', name);
-      }
-    });
+    vscode.window.showInputBox({ prompt: "What should I call you?", value: 'Friend' })
+      .then(name => { if (name) context.globalState.update('userName', name); });
   }
 
-  // Command to open standalone Wisp panel
+  // Command: open standalone Wisp panel
   context.subscriptions.push(
     vscode.commands.registerCommand('blobbuddy.showWisp', () => {
       const panel = vscode.window.createWebviewPanel(
-        'blobbuddy',
-        'Your Wisp',
-        vscode.ViewColumn.One,
-        {
-          enableScripts: true,
-          localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))]
-        }
+        'blobbuddy', 'Your Wisp', vscode.ViewColumn.One,
+        { enableScripts: true, localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))] }
       );
       setWebviewContent(panel.webview, context);
+      // reload quip on panel reveal
+      panel.onDidChangeViewState(e => {
+        if (e.webviewPanel.visible) postQuip(panel.webview, context);
+      });
     })
   );
 
@@ -47,39 +39,43 @@ export function deactivate() {}
 class WispSidebarProvider implements vscode.WebviewViewProvider {
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  resolveWebviewView(webviewView: vscode.WebviewView) {
-    webviewView.webview.options = {
-      enableScripts: true,
-      localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'media'))]
-    };
-    setWebviewContent(webviewView.webview, this.context);
-    
+  resolveWebviewView(view: vscode.WebviewView) {
+    view.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'media'))] };
+    setWebviewContent(view.webview, this.context);
+    // reload quip when sidebar gains focus
+    view.onDidChangeVisibility(() => {
+      if (view.visible) {
+        postQuip(view.webview, this.context);
+      }
+    });
   }
 }
 
-// Common loader for both panel and sidebar
-function setWebviewContent(webview: vscode.Webview | vscode.WebviewView['webview'], context: vscode.ExtensionContext) {
+// shared loader
+function setWebviewContent(webview: vscode.Webview, context: vscode.ExtensionContext) {
   const htmlPath = path.join(context.extensionPath, 'media', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
-  // Replace asset paths and inject state message
-  html = html.replace(/(src|href)=['"]([^'"]+)['"]/g, (_, attr, src) => {
-    const assetPath = vscode.Uri.file(path.join(context.extensionPath, 'media', src));
-    const webviewUri = webview.asWebviewUri(assetPath);
-    return `${attr}="${webviewUri}"`;
+  html = html.replace(/(src|href)="(.+?)"/g, (_, attr, src) => {
+    const uri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', src)));
+    return `${attr}="${uri}"`;
   });
   webview.html = html;
+  webview.postMessage({ type: 'init', quip: generateQuip(context) });
+}
 
-  // Prepare state
-  const userName = context.globalState.get<string>('userName') || 'Wisp';
+// helper to post only quip
+function postQuip(webview: vscode.Webview, context: vscode.ExtensionContext) {
+  webview.postMessage({ type: 'quip', quip: generateQuip(context) });
+}
+
+function generateQuip(context: vscode.ExtensionContext): string {
+  const userName = context.globalState.get<string>('userName') || 'Friend';
   const quips = [
-    `Keep going, ${userName}!`,
+    `Keep going ${userName}, you got this!`,
     `${userName}, you're doing great!`,
-    `Take a breath, ${userName}.`,
+    `Don't forget to take breaks ${userName}.`,
     `One step at a time, ${userName}.`,
-    `You've got this, ${userName}!`
+    `Did you remmber to drink water, ${userName}?`
   ];
-  const quip = quips[Math.floor(Math.random() * quips.length)];
-
-  // Send init message
-  webview.postMessage({ type: 'init', userName, quip });
+  return quips[Math.floor(Math.random() * quips.length)];
 }

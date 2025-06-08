@@ -2,28 +2,26 @@ import React, { useEffect, useState } from 'react';
 import flame from './assets/flame.png';
 import './styles/blob.scss';
 
-declare global {
-  interface Window { acquireVsCodeApi: any; }
-}
+declare global { interface Window { acquireVsCodeApi(): any; } }
 const vscode = window.acquireVsCodeApi();
 
 const App = () => {
-  const [userName, setUserName] = useState('Friend');
-  const [quip, setQuip] = useState('Hello, I am your Wisp 🫧');
+  const [quip, setQuip] = useState("Hi there! I'm your Wisp ✨");
 
   useEffect(() => {
-    window.addEventListener('message', event => {
+    const handler = (event: MessageEvent) => {
       const msg = event.data;
-      if (msg.type === 'init') {
-        setUserName(msg.userName);
+      if (msg.type === 'init' || msg.type === 'quip') {
         setQuip(msg.quip);
       }
-    });
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
   }, []);
 
   return (
     <div className="blob-container">
-      <img src={flame} className="blob-flame" alt={userName} />
+      <img src={flame} className="blob-flame" alt="Wisp" />
       <p className="blob-message">{quip}</p>
     </div>
   );
