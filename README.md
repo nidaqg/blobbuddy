@@ -10,4 +10,5 @@ BlobBuddy is your emotional support extension for VS Code, featuring Wisps — s
 3. Press `F5` in VS Code to launch extension debug mode
 
 ## Command
-> **Show Wisp** — Opens your companion blob panel
+> **Wisp: Show Wisp** — Opens your companion blob panel
+> **Wisp: Reset User Name** — If you want to reset what your Wisp calls you
