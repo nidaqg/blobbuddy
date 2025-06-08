@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { generateQuip } from './quips';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("BlobBuddy extension activated");
@@ -66,16 +67,4 @@ function setWebviewContent(webview: vscode.Webview, context: vscode.ExtensionCon
 // helper to post only quip
 function postQuip(webview: vscode.Webview, context: vscode.ExtensionContext) {
   webview.postMessage({ type: 'quip', quip: generateQuip(context) });
-}
-
-function generateQuip(context: vscode.ExtensionContext): string {
-  const userName = context.globalState.get<string>('userName') || 'Friend';
-  const quips = [
-    `Keep going ${userName}, you got this!`,
-    `${userName}, you're doing great!`,
-    `Don't forget to take breaks ${userName}.`,
-    `One step at a time, ${userName}.`,
-    `Did you remmber to drink water, ${userName}?`
-  ];
-  return quips[Math.floor(Math.random() * quips.length)];
 }
