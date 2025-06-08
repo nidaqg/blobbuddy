@@ -1,0 +1,50 @@
+{
+  "name": "blobbuddy",
+  "displayName": "BlobBuddy",
+  "publisher": "nidaqg",
+  "icon": "assets/icon.png",
+  "description": "An emotional support Wisp who lives in your IDE",
+  "version": "1.0.0",
+  "main": "./extension/extension.js",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onView:wispView",
+    "onCommand:blobbuddy.showWisp"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "blobbuddy.showWisp",
+        "title": "Show Wisp"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "blobbuddySidebar",
+          "title": "BlobBuddy",
+          "icon": "assets/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "blobbuddySidebar": [
+        {
+          "id": "wispView",
+          "name": "Your Wisp",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "cd webview-ui && npm install && npm run build && cd .. && npx tsc -p .",
+    "watch": "npx tsc -w"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.0.0"
+  }
+}

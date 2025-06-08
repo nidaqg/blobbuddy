@@ -1,0 +1,23 @@
+# Node modules
+node_modules/
+webview-ui/node_modules/
+
+# Build output
+/media/
+extension/*.js
+extension/*.js.map
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# VS Code workspace settings
+.vscode/
+
+# Environment files
+.env
+.env.local
+.env.production

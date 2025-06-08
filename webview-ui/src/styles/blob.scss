@@ -1,0 +1,29 @@
+.blob-container {
+  text-align: center;
+  margin-top: 50px;
+  color: #ccc;
+}
+
+.blob {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  background: radial-gradient(circle at 30% 30%, #6d78f3, #3c3c92);
+  border-radius: 50% 50% 45% 55% / 55% 45% 55% 45%;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.blob-message {
+  font-family: monospace;
+  margin-top: 10px;
+  font-size: 14px;
+}
