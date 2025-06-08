@@ -6,9 +6,7 @@ import { generateQuip } from './quips';
 // Track errors to determine mood
 let errorCount = 0;
 
-/**
- * Compute mood based on current error count.
- */
+//Compute mood based on current error count.
 function computeMood(): 'happy' | 'focused' | 'worried' {
   if (errorCount > 5) {
     return 'worried';
@@ -56,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Reset name command
+  // Command: Reset name and prompt for new one
   context.subscriptions.push(
     vscode.commands.registerCommand('blobbuddy.resetName', async () => {
       await context.globalState.update('userName', undefined);
@@ -113,8 +111,6 @@ function postQuip(webview: vscode.Webview, context: vscode.ExtensionContext) {
 
 function sendMoodUpdate(context: vscode.ExtensionContext) {
   const mood = computeMood();
-  // Broadcast to any visible sidebar view
-  vscode.window.visibleTextEditors; // noop to ensure context
-  // Ideally, keep track of view instances; simplified here:
+  vscode.window.visibleTextEditors; 
   vscode.commands.executeCommand('workbench.view.extension.blobbuddySidebar');
 }
