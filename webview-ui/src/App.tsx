@@ -1,12 +1,10 @@
 import React from 'react';
 import './styles/blob.scss';
-// import the flame asset
 import flame from './assets/flame.png';
 
 const App = () => {
   return (
     <div className="blob-container">
-      {/* Use the flame image instead of the CSS blob */}
       <img src={flame} className="blob-flame" alt="Your Wisp" />
       <p className="blob-message">Hello, I am your Wisp 🫧</p>
     </div>
