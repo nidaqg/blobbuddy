@@ -17,8 +17,11 @@
     "commands": [
       {
         "command": "blobbuddy.showWisp",
-        "title": "Show Wisp"
-      }
+        "title": "Wisp: Show Wisp"
+      },
+      { "command": "blobbuddy.resetName", 
+      "title": "Wisp: Reset User Name" 
+     }
     ],
     "viewsContainers": {
       "activitybar": [
