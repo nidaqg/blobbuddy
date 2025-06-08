@@ -102,11 +102,11 @@ function setWebviewContent(webview: vscode.Webview, context: vscode.ExtensionCon
     return `${attr}="${uri}"`;
   });
   webview.html = html;
-  webview.postMessage({ type: 'init', quip: generateQuip(context), mood: computeMood() });
+  webview.postMessage({ type: 'init', quip: generateQuip(context, computeMood()), mood: computeMood() });
 }
 
 function postQuip(webview: vscode.Webview, context: vscode.ExtensionContext) {
-  webview.postMessage({ type: 'quip', quip: generateQuip(context) });
+  webview.postMessage({ type: 'quip', quip: generateQuip(context, computeMood()) });
 }
 
 function sendMoodUpdate(context: vscode.ExtensionContext) {
