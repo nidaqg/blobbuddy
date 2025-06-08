@@ -44,6 +44,9 @@
     "watch": "npx tsc -w"
   },
   "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
     "@types/vscode": "^1.85.0",
     "typescript": "^5.0.0"
   }
