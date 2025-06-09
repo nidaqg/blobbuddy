@@ -15,9 +15,8 @@
 }
 
 .blob-container.mood-happy .blob-flame {
-  filter: drop-shadow(0 0 20px rgba(0, 200, 100, 0.6));
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.6));
 }
-
 .blob-container.mood-focused .blob-flame {
   filter: drop-shadow(0 0 20px rgba(0, 120, 200, 0.6));
 }
@@ -27,7 +26,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {

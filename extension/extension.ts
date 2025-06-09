@@ -1,20 +1,26 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
-import { generateQuip } from './quips';
+import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
+import { generateQuip } from "./quips";
 
-// Track errors to determine mood
+// Track errors to determine 'mood'
 let errorCount = 0;
 
-//Compute mood based on current error count.
-function computeMood(): 'happy' | 'focused' | 'worried' {
+// ─── Typing-based break reminder config ───
+const CONTINUOUS_HOUR = 60 * 60 * 1000;
+const PAUSE_THRESHOLD = 5 * 60 * 1000;
+let cumulativeTyping = 0;
+let lastTypingTime: number | undefined;
+
+//Compute mood based on current error count
+function computeMood(): "happy" | "focused" | "worried" {
   if (errorCount > 5) {
-    return 'worried';
+    return "worried";
   }
   if (errorCount > 0) {
-    return 'focused';
+    return "focused";
   }
-  return 'happy';
+  return "happy";
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -23,32 +29,70 @@ export function activate(context: vscode.ExtensionContext) {
   // Listen for diagnostics changes to update errorCount and broadcast mood
   const diagListener = vscode.languages.onDidChangeDiagnostics(() => {
     const allDiags = vscode.languages.getDiagnostics();
-    errorCount = allDiags.reduce((sum, [_, diags]) =>
-      sum + diags.filter(d => d.severity === vscode.DiagnosticSeverity.Error).length
-    , 0);
-    sendMoodUpdate(context);
+    errorCount = allDiags.reduce(
+      (sum, [_, diags]) =>
+        sum +
+        diags.filter((d) => d.severity === vscode.DiagnosticSeverity.Error)
+          .length,
+      0
+    );
+    sendMoodUpdate(context, wispProvider.view);
   });
   context.subscriptions.push(diagListener);
 
   // Prompt for user name once
-  const storedName = context.globalState.get<string>('userName');
+  const storedName = context.globalState.get<string>("userName");
   if (!storedName) {
-    vscode.window.showInputBox({ prompt: "What should I call you?", value: 'Friend' })
-      .then(name => { if (name) context.globalState.update('userName', name); });
+    vscode.window
+      .showInputBox({ prompt: "What should I call you?", value: "Friend" })
+      .then((name) => {
+        if (name) context.globalState.update("userName", name);
+      });
   }
+
+  // Continuous-Typing break reminder
+  const typingListener = vscode.workspace.onDidChangeTextDocument(() => {
+    const now = Date.now();
+    if (lastTypingTime !== undefined) {
+      const gap = now - lastTypingTime;
+      if (gap < PAUSE_THRESHOLD) {
+        cumulativeTyping += gap;
+      } else {
+        cumulativeTyping = 0;
+      }
+    }
+    lastTypingTime = now;
+
+    if (cumulativeTyping >= CONTINUOUS_HOUR) {
+      vscode.window.showInformationMessage(
+        "🐝 You’ve been coding non-stop for an hour, don't forget to take breaks! 🐝",
+        "Sounds good"
+      );
+      cumulativeTyping = 0;
+      lastTypingTime = now;
+    }
+  });
+  context.subscriptions.push(typingListener);
 
   // Command: open standalone Wisp panel
   context.subscriptions.push(
-    vscode.commands.registerCommand('blobbuddy.showWisp', () => {
+    vscode.commands.registerCommand("blobbuddy.showWisp", () => {
       const panel = vscode.window.createWebviewPanel(
-        'blobbuddy', 'Your Wisp', vscode.ViewColumn.One,
-        { enableScripts: true, localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))] }
+        "blobbuddy",
+        "Your Wisp",
+        vscode.ViewColumn.One,
+        {
+          enableScripts: true,
+          localResourceRoots: [
+            vscode.Uri.file(path.join(context.extensionPath, "media")),
+          ],
+        }
       );
       setWebviewContent(panel.webview, context);
-      panel.onDidChangeViewState(e => {
+      panel.onDidChangeViewState((e) => {
         if (e.webviewPanel.visible) {
           postQuip(panel.webview, context);
-          panel.webview.postMessage({ type: 'mood', mood: computeMood() });
+          panel.webview.postMessage({ type: "mood", mood: computeMood() });
         }
       });
     })
@@ -56,12 +100,17 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Command: Reset name and prompt for new one
   context.subscriptions.push(
-    vscode.commands.registerCommand('blobbuddy.resetName', async () => {
-      await context.globalState.update('userName', undefined);
-      const newName = await vscode.window.showInputBox({ prompt: "What should I call you now?", value: 'Friend' });
+    vscode.commands.registerCommand("blobbuddy.resetName", async () => {
+      await context.globalState.update("userName", undefined);
+      const newName = await vscode.window.showInputBox({
+        prompt: "What should I call you?",
+        value: "Friend",
+      });
       if (newName) {
-        await context.globalState.update('userName', newName);
-        vscode.window.showInformationMessage(`Got it! I'll call you ${newName}.`);
+        await context.globalState.update("userName", newName);
+        vscode.window.showInformationMessage(
+          `Got it! I'll call you ${newName}.`
+        );
       }
     })
   );
@@ -69,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Sidebar Webview View Provider
   const wispProvider = new WispSidebarProvider(context);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider('wispView', wispProvider)
+    vscode.window.registerWebviewViewProvider("wispView", wispProvider)
   );
 }
 
@@ -78,39 +127,65 @@ export function deactivate() {}
 class WispSidebarProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
 
+  public get view(): vscode.WebviewView | undefined {
+    return this._view;
+  }
+
   constructor(private readonly context: vscode.ExtensionContext) {}
 
   resolveWebviewView(view: vscode.WebviewView) {
     this._view = view;
-    view.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'media'))] };
+    view.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.file(path.join(this.context.extensionPath, "media")),
+      ],
+    };
     setWebviewContent(view.webview, this.context);
     view.onDidChangeVisibility(() => {
       if (view.visible) {
         postQuip(view.webview, this.context);
-        view.webview.postMessage({ type: 'mood', mood: computeMood() });
+        view.webview.postMessage({ type: "mood", mood: computeMood() });
       }
     });
   }
 }
 
 // shared loader
-function setWebviewContent(webview: vscode.Webview, context: vscode.ExtensionContext) {
-  const htmlPath = path.join(context.extensionPath, 'media', 'index.html');
-  let html = fs.readFileSync(htmlPath, 'utf8');
+function setWebviewContent(
+  webview: vscode.Webview,
+  context: vscode.ExtensionContext
+) {
+  const htmlPath = path.join(context.extensionPath, "media", "index.html");
+  let html = fs.readFileSync(htmlPath, "utf8");
   html = html.replace(/(src|href)="(.+?)"/g, (_, attr, src) => {
-    const uri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', src)));
+    const uri = webview.asWebviewUri(
+      vscode.Uri.file(path.join(context.extensionPath, "media", src))
+    );
     return `${attr}="${uri}"`;
   });
   webview.html = html;
-  webview.postMessage({ type: 'init', quip: generateQuip(context, computeMood()), mood: computeMood() });
+  webview.postMessage({
+    type: "init",
+    quip: generateQuip(context, computeMood()),
+    mood: computeMood(),
+  });
 }
 
 function postQuip(webview: vscode.Webview, context: vscode.ExtensionContext) {
-  webview.postMessage({ type: 'quip', quip: generateQuip(context, computeMood()) });
+  webview.postMessage({
+    type: "quip",
+    quip: generateQuip(context, computeMood()),
+  });
 }
 
-function sendMoodUpdate(context: vscode.ExtensionContext) {
+function sendMoodUpdate(
+  context: vscode.ExtensionContext,
+  view?: vscode.WebviewView
+) {
   const mood = computeMood();
-  vscode.window.visibleTextEditors; 
-  vscode.commands.executeCommand('workbench.view.extension.blobbuddySidebar');
+  vscode.window.visibleTextEditors;
+  if (view && view.visible) {
+    view.webview.postMessage({ type: "mood", mood });
+  }
 }
