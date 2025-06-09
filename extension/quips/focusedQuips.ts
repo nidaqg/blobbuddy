@@ -4,5 +4,5 @@ export const focusedQuips = [
   `Eyes on the prize, {user}. Keep that focus.`,
   `{user}, your focus is unlocking greatness.`,
   `Locked in, {user}? Keep that momentum.`,
-  `Your focus is admirable, {user}. Carry on.`
+  `Your focus is admirable, {user}. Keep going!`
 ];
