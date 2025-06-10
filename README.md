@@ -24,6 +24,12 @@ BlobBuddy is your emotional support extension for VS Code, featuring Wisps — s
   If you type continuously for **one hour** (allowing brief pauses under 5 minutes), BlobBuddy gently nudges you with a break reminder. 
   This reminder pops up even if you never open the Wisp panel!
 
+- **Today & Tomorrow Reminders**  
+  - **Set Reminder for Today**: Store a one-off reminder that displays under “🔔 Reminder for Today” in the sidebar.  
+  - **Set Reminder for Tomorrow**: Store a plan under “🔔 Reminder for Tomorrow” that appears in the sidebar today.  
+  - **Midnight Rollover**: At midnight, “Tomorrow” becomes “Today,” and the old reminders clear automatically.  
+  - **Clear Reminders**: You can clear either slot independently if plans change.
+
 ---
 
 ## Setup
@@ -39,6 +45,18 @@ BlobBuddy is your emotional support extension for VS Code, featuring Wisps — s
 
 - **Wisp: Reset User Name**  
   Clears your stored name and prompts you to enter a new one.
+
+- **Wisp: Set Reminder for Today**  
+  Prompts for a one-line reminder that appears under “🔔 Reminder for Today.”
+
+- **Wisp: Set Reminder for Tomorrow**  
+  Prompts for a note that appears under “🔔 Reminder for Tomorrow” (then rolls over to Today at midnight).
+
+- **Wisp: Clear Reminder for Today**  
+  Removes the current Today reminder from the sidebar.
+
+- **Wisp: Clear Reminder for Tomorrow**  
+  Removes the current Tomorrow reminder from the sidebar.
 
 ---
 
