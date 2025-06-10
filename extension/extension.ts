@@ -158,7 +158,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     if (cumulativeTyping >= CONTINUOUS_HOUR) {
       vscode.window.showInformationMessage(
-        "🛌 You’ve been coding non-stop for an hour—time for a break!",
+        "🐝 You’ve been coding non-stop for an hour, don't forget to take breaks! 🐝",
         "Sounds good"
       );
       cumulativeTyping = 0;
@@ -194,6 +194,23 @@ export function activate(context: vscode.ExtensionContext) {
       });
     })
   );
+
+  // ─── Command: Prompt for user name once if none stored ───
+  const storedName = context.globalState.get<string>("userName");
+  if (!storedName) {
+    vscode.window
+      .showInputBox({ prompt: "What should I call you?", value: "" })
+      .then((name) => {
+        if (name) context.globalState.update("userName", name);
+        const view = wispProvider.view;
+        if (view?.visible) {
+          view.webview.postMessage({
+            type: "quip",
+            quip: generateQuip(context, computeMood()),
+          });
+        }
+      });
+  }
 
   // ─── Command: Reset Name ───
   context.subscriptions.push(
