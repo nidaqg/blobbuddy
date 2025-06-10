@@ -201,7 +201,7 @@ export function activate(context: vscode.ExtensionContext) {
       await context.globalState.update("userName", undefined);
       const newName = await vscode.window.showInputBox({
         prompt: "What should I call you?",
-        value: "Friend",
+        value: "",
       });
       if (newName) {
         await context.globalState.update("userName", newName);
@@ -214,7 +214,6 @@ export function activate(context: vscode.ExtensionContext) {
             type: "init",
             quip: generateQuip(context, computeMood()),
             mood: computeMood(),
-            userName: newName,
           });
         }
       }
