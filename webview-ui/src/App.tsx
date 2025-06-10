@@ -10,6 +10,7 @@ declare global {
 const vscode = window.acquireVsCodeApi();
 
 const App = () => {
+  const [userName, setUserName] = useState("Friend");
   const [quip, setQuip] = useState("Hi there! I'm your Wisp ✨");
   const [mood, setMood] = useState<"happy" | "focused" | "worried">("happy");
   const [reminderToday, setReminderToday] = useState("");
@@ -17,10 +18,13 @@ const App = () => {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const { type, quip, mood, text } = event.data;
+      const { type, quip, mood, text, userName } = event.data;
 
       switch (type) {
         case "init":
+          if (userName) {
+            setUserName(userName);
+          }
           setQuip(quip);
           setMood(mood);
           break;

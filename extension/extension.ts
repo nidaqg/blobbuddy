@@ -208,6 +208,15 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(
           `Got it! I'll call you ${newName}.`
         );
+        const view = wispProvider.view;
+        if (view?.visible) {
+          view.webview.postMessage({
+            type: "init",
+            quip: generateQuip(context, computeMood()),
+            mood: computeMood(),
+            userName: newName,
+          });
+        }
       }
     })
   );
