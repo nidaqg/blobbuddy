@@ -19,9 +19,18 @@
         "command": "blobbuddy.showWisp",
         "title": "Wisp: Show Wisp"
       },
-      { "command": "blobbuddy.resetName", 
-      "title": "Wisp: Reset User Name" 
-     }
+      {
+        "command": "blobbuddy.resetName",
+        "title": "Wisp: Reset User Name"
+      },
+      {
+        "command": "blobbuddy.setReminderToday",
+        "title": "Wisp: Set Reminder for Today"
+      },
+      {
+        "command": "blobbuddy.setReminderTomorrow",
+        "title": "Wisp: Set Reminder for Tomorrow"
+      }
     ],
     "viewsContainers": {
       "activitybar": [

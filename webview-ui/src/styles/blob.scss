@@ -40,3 +40,25 @@
   margin-top: 10px;
   font-size: 14px;
 }
+
+.reminder-section {
+  margin-top: 12px;
+  padding: 8px;
+  font-size: 0.9em;
+  h4 {
+    margin: 12px 0;
+    font-size: 1em;
+  }
+  p {
+    margin: 0;
+  }
+  .reminder-today {
+    margin-bottom: 12px;
+    margin-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .reminder-tomorrow {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 12px;
+  }
+}
