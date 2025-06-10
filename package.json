@@ -30,6 +30,14 @@
       {
         "command": "blobbuddy.setReminderTomorrow",
         "title": "Wisp: Set Reminder for Tomorrow"
+      },
+      {
+        "command": "blobbuddy.clearReminderTomorrow",
+        "title": "Wisp: Clear Reminder for Tomorrow"
+      },
+      {
+        "command": "blobbuddy.clearReminderToday",
+        "title": "Wisp: Clear Reminder for Today"
       }
     ],
     "viewsContainers": {

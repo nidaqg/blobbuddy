@@ -3,13 +3,13 @@ import * as path from "path";
 import * as fs from "fs";
 import { generateQuip } from "./quips";
 
-// ─── Typing‐Based Break Reminder Config ───
+// ─── Typing‐based break reminder config ───
 const CONTINUOUS_HOUR = 60 * 60 * 1000;
 const PAUSE_THRESHOLD = 5 * 60 * 1000;
 let cumulativeTyping = 0;
 let lastTypingTime: number | undefined;
 
-// ─── Mood Tracking ───
+// ─── Mood tracking ───
 let errorCount = 0;
 function computeMood(): "happy" | "focused" | "worried" {
   if (errorCount > 5) return "worried";
@@ -17,16 +17,9 @@ function computeMood(): "happy" | "focused" | "worried" {
   return "happy";
 }
 
-// ─── Reminder Keys ───
+// ─── Reminder keys ───
 const TODAY_KEY = "reminderToday";
 const TOMORROW_KEY = "reminderTomorrow";
-
-// Helpers for date keys
-function getTomorrowDateKey(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().split("T")[0];
-}
 
 // Schedule rollover at midnight
 function scheduleMidnightRollover(context: vscode.ExtensionContext) {
@@ -35,7 +28,9 @@ function scheduleMidnightRollover(context: vscode.ExtensionContext) {
     now.getFullYear(),
     now.getMonth(),
     now.getDate() + 1,
-    0, 0, 1
+    0,
+    0,
+    1
   );
   const ms = nextMidnight.getTime() - now.getTime();
   setTimeout(() => {
@@ -54,7 +49,7 @@ function scheduleMidnightRollover(context: vscode.ExtensionContext) {
 export function activate(context: vscode.ExtensionContext) {
   console.log("BlobBuddy extension activated");
 
-  // ─── Sidebar Provider ───
+  // ─── Sidebar provider ───
   const wispProvider = new WispSidebarProvider(context);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("wispView", wispProvider)
@@ -82,22 +77,59 @@ export function activate(context: vscode.ExtensionContext) {
 
   // ─── Command: Set Reminder for Tomorrow ───
   context.subscriptions.push(
-    vscode.commands.registerCommand("blobbuddy.setReminderTomorrow", async () => {
-      const text = await vscode.window.showInputBox({
-        prompt: "What should I remind you of *tomorrow*?",
-      });
-      if (text) {
-        await context.globalState.update(TOMORROW_KEY, { text });
-        vscode.window.showInformationMessage(`Reminder for tomorrow set: ${text}`);
-        const view = wispProvider.view;
-        if (view?.visible) {
-          view.webview.postMessage({ type: "reminderTomorrow", text });
+    vscode.commands.registerCommand(
+      "blobbuddy.setReminderTomorrow",
+      async () => {
+        const text = await vscode.window.showInputBox({
+          prompt: "What should I remind you of *tomorrow*?",
+        });
+        if (text) {
+          await context.globalState.update(TOMORROW_KEY, { text });
+          vscode.window.showInformationMessage(
+            `Reminder for tomorrow set: ${text}`
+          );
+          const view = wispProvider.view;
+          if (view?.visible) {
+            view.webview.postMessage({ type: "reminderTomorrow", text });
+          }
         }
       }
-    })
+    )
   );
 
-  // ─── Diagnostics → Mood Updates ───
+  // ─── Command: Clear Reminder for Today ───
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "blobbuddy.clearReminderToday",
+      async () => {
+        await context.globalState.update(TODAY_KEY, undefined);
+        vscode.window.showInformationMessage("✅ Cleared reminder for today.");
+        const view = wispProvider.view;
+        if (view?.visible) {
+          view.webview.postMessage({ type: "reminderToday", text: "" });
+        }
+      }
+    )
+  );
+
+  // ─── Command: Clear Reminder for Tomorrow ───
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "blobbuddy.clearReminderTomorrow",
+      async () => {
+        await context.globalState.update(TOMORROW_KEY, undefined);
+        vscode.window.showInformationMessage(
+          "✅ Cleared reminder for tomorrow."
+        );
+        const view = wispProvider.view;
+        if (view?.visible) {
+          view.webview.postMessage({ type: "reminderTomorrow", text: "" });
+        }
+      }
+    )
+  );
+
+  // ─── Mood Updates ───
   const diagListener = vscode.languages.onDidChangeDiagnostics(() => {
     const allDiags = vscode.languages.getDiagnostics();
     errorCount = allDiags.reduce(
@@ -114,7 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(diagListener);
 
-  // ─── Typing Listener → Break Reminder ───
+  // ─── Break Reminder ───
   const typingListener = vscode.workspace.onDidChangeTextDocument(() => {
     const now = Date.now();
     if (lastTypingTime !== undefined) {
@@ -157,7 +189,6 @@ export function activate(context: vscode.ExtensionContext) {
             type: "mood",
             mood: computeMood(),
           });
-          // live reminders
           sendReminders(panel.webview, context);
         }
       });
@@ -174,7 +205,9 @@ export function activate(context: vscode.ExtensionContext) {
       });
       if (newName) {
         await context.globalState.update("userName", newName);
-        vscode.window.showInformationMessage(`Got it! I'll call you ${newName}.`);
+        vscode.window.showInformationMessage(
+          `Got it! I'll call you ${newName}.`
+        );
       }
     })
   );
@@ -239,7 +272,10 @@ function postQuip(webview: vscode.Webview, context: vscode.ExtensionContext) {
   });
 }
 
-function sendReminders(webview: vscode.Webview, context: vscode.ExtensionContext) {
+function sendReminders(
+  webview: vscode.Webview,
+  context: vscode.ExtensionContext
+) {
   // today
   const todayRec = context.globalState.get<{ text: string }>(TODAY_KEY);
   const todayText = todayRec?.text || "";

@@ -17,22 +17,30 @@ const App = () => {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const msg = event.data;
-      if (msg.type === "init") {
-        setQuip(msg.quip);
-        setMood(msg.mood);
-      } else if (msg.type === "quip") {
-        setQuip(msg.quip);
-      } else if (msg.type === "mood") {
-        setMood(msg.mood);
-      }
-      if (msg.type === "reminderToday") {
-        setReminderToday(msg.text);
-      }
-      if (msg.type === "reminderTomorrow") {
-        setReminderTomorrow(msg.text);
+      const { type, quip, mood, text } = event.data;
+
+      switch (type) {
+        case "init":
+          setQuip(quip);
+          setMood(mood);
+          break;
+        case "quip":
+          setQuip(quip);
+          break;
+        case "mood":
+          setMood(mood);
+          break;
+        case "reminderToday":
+          setReminderToday(text);
+          break;
+        case "reminderTomorrow":
+          setReminderTomorrow(text);
+          break;
+        default:
+          break;
       }
     };
+
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, []);
