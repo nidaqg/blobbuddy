@@ -28,20 +28,19 @@ function scheduleMidnightRollover(context: vscode.ExtensionContext) {
     now.getFullYear(),
     now.getMonth(),
     now.getDate() + 1,
-    0,
-    0,
-    1
+    0, 0, 1
   );
   const ms = nextMidnight.getTime() - now.getTime();
-  setTimeout(() => {
-    // Move tomorrow → today
+
+  setTimeout(async () => {
+    await context.globalState.update(TODAY_KEY, undefined);
     const tom = context.globalState.get<{ text: string }>(TOMORROW_KEY);
     if (tom) {
-      context.globalState.update(TODAY_KEY, tom);
+      await context.globalState.update(TODAY_KEY, tom);
     }
-    // Clear old today & tomorrow
-    context.globalState.update(TOMORROW_KEY, undefined);
-    context.globalState.update(TODAY_KEY, undefined);
+
+    await context.globalState.update(TOMORROW_KEY, undefined);
+
     scheduleMidnightRollover(context);
   }, ms);
 }
