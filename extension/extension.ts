@@ -21,6 +21,38 @@ function computeMood(): "happy" | "focused" | "worried" {
 const TODAY_KEY = "reminderToday";
 const TOMORROW_KEY = "reminderTomorrow";
 
+// Helpers for date keys
+function getTodayDateKey(): string {
+  return new Date().toISOString().split("T")[0];
+}
+function getTomorrowDateKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split("T")[0];
+}
+
+// On activation, immediately migrate reminders if needed
+function checkRollover(context: vscode.ExtensionContext) {
+  const todayKey = getTodayDateKey();
+
+  // Clear stale Today reminder
+  const todayRec = context.globalState.get<{ date: string; text: string }>(
+    TODAY_KEY
+  );
+  if (todayRec?.date !== todayKey) {
+    context.globalState.update(TODAY_KEY, undefined);
+  }
+
+  // Move Tomorrow → Today if it’s for today
+  const tomRec = context.globalState.get<{ date: string; text: string }>(
+    TOMORROW_KEY
+  );
+  if (tomRec?.date === todayKey) {
+    context.globalState.update(TODAY_KEY, tomRec);
+    context.globalState.update(TOMORROW_KEY, undefined);
+  }
+}
+
 // Schedule rollover at midnight
 function scheduleMidnightRollover(context: vscode.ExtensionContext) {
   const now = new Date();
@@ -28,7 +60,9 @@ function scheduleMidnightRollover(context: vscode.ExtensionContext) {
     now.getFullYear(),
     now.getMonth(),
     now.getDate() + 1,
-    0, 0, 1
+    0,
+    0,
+    1
   );
   const ms = nextMidnight.getTime() - now.getTime();
 
@@ -45,14 +79,46 @@ function scheduleMidnightRollover(context: vscode.ExtensionContext) {
   }, ms);
 }
 
+// Schedule UI refresh at midnight
+function scheduleUIRefresh(context: vscode.ExtensionContext) {
+  const now = new Date();
+  const nextMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0,
+    0,
+    1
+  );
+  const ms = nextMidnight.getTime() - now.getTime();
+  setTimeout(() => {
+    // Refresh sidebar content if open
+    const view = wispProviderGlobal?.view;
+    if (view?.visible) {
+      sendReminders(view.webview, context);
+    }
+    // Schedule again
+    scheduleUIRefresh(context);
+  }, ms);
+}
+
+let wispProviderGlobal: WispSidebarProvider | undefined;
+
 export function activate(context: vscode.ExtensionContext) {
   console.log("BlobBuddy extension activated");
 
+  // Migrate reminders on load
+  checkRollover(context);
+
   // ─── Sidebar provider ───
   const wispProvider = new WispSidebarProvider(context);
+  wispProviderGlobal = wispProvider;
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("wispView", wispProvider)
   );
+
+  // Schedule UI-only refresh at midnight
+  scheduleUIRefresh(context);
 
   // ─── Schedule Midnight Rollover ───
   scheduleMidnightRollover(context);
@@ -64,7 +130,8 @@ export function activate(context: vscode.ExtensionContext) {
         prompt: "What should I remind you of *today*?",
       });
       if (text) {
-        await context.globalState.update(TODAY_KEY, { text });
+        const rec = { date: getTodayDateKey(), text };
+        await context.globalState.update(TODAY_KEY, rec);
         vscode.window.showInformationMessage(`Reminder for today set: ${text}`);
         const view = wispProvider.view;
         if (view?.visible) {
@@ -83,7 +150,8 @@ export function activate(context: vscode.ExtensionContext) {
           prompt: "What should I remind you of *tomorrow*?",
         });
         if (text) {
-          await context.globalState.update(TOMORROW_KEY, { text });
+          const rec = { date: getTomorrowDateKey(), text };
+          await context.globalState.update(TOMORROW_KEY, rec);
           vscode.window.showInformationMessage(
             `Reminder for tomorrow set: ${text}`
           );
